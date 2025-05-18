@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import  axios  from 'axios';
 
 export default function Login() {
   const [isSignIn, setIsSignIn] = useState(true);
+  const [mssg,setMsg] = useState("");
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
 
   const handleChange = (e) => {
@@ -17,26 +19,38 @@ export default function Login() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSignIn) {
-      console.log('Signing in with:', {
-        email: formData.email,
-        password: formData.password
-      });
-      // Add sign-in logic here
-    } else {
-      if (formData.password !== formData.confirmPassword) {
-        alert("Passwords don't match!");
+    if(!isSignIn){
+      if(formData.password != formData.confirmPassword){
+        setMsg('password doesnt match');
         return;
       }
-      console.log('Signing up with:', {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-      });
-      // Add sign-up logic here
+      try {
+        const res = await axios.post("http://localhost:5000/api/auth/signup", {
+          name: formData.name, 
+          email: formData.email,
+          password: formData.password
+        });
+        setMsg(res.data.msg);
+      } catch (err){
+        setMsg(err.resposne?.data?.message || 'signup failed');
+      }
     }
+    else {
+      try{
+
+        const res = await axios.post("http://localhost:5000/api/auth/login",{
+          email: formData.email,
+          password: formData.password
+        });
+        localStorage.setItem('token', res.data.token);
+        setMsg(res.data.msg);
+      } catch (err){
+        setMsg(err.resposne?.data?.message || 'Login failed')
+      }
+    }
+    
   };
 
   const toggleForm = () => {
@@ -46,8 +60,9 @@ export default function Login() {
       name: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
     });
+    setMsg('');
   };
 
   return (
@@ -149,6 +164,13 @@ export default function Login() {
               />
             </div>
           )}
+
+          {mssg && (
+            <div className={`text-sm font-medium text-center ${mssg.toLowerCase().includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                {mssg}
+            </div>
+          )}
+
 
           <div>
             <button
