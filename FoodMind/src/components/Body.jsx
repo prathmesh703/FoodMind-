@@ -5,11 +5,11 @@ import Main from "./Main.jsx"
 const Body = ()=>{
     const appRouter = createBrowserRouter([
         {
-            path:"/",
+            path:"/login",
             element:<Login/>
         },
         {
-            path:"main/",
+            path:"/",
             element:<Main/>
         }
     ])
