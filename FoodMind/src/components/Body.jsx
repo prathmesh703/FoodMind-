@@ -2,6 +2,7 @@
 import {createBrowserRouter , RouterProvider } from "react-router-dom"   //different routes pe route krne ke liye
 import Login from './Login.jsx'
 import Main from "./Main.jsx"
+import Profile from "./profile.jsx"
 const Body = ()=>{
     const appRouter = createBrowserRouter([
         {
@@ -11,6 +12,10 @@ const Body = ()=>{
         {
             path:"/",
             element:<Main/>
+        },
+        {
+            path:"profile", 
+            element:<Profile/>
         }
     ])
     return (

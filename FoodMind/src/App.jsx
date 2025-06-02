@@ -1,15 +1,15 @@
-import { useState } from 'react'
-import './App.css'
-import Body from './components/Body'
+import { useState } from "react";
+import "./App.css";
+import Body from "./components/Body";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
     <>
       <Body></Body>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
