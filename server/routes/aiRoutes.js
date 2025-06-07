@@ -1,37 +1,83 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { OpenAI } = require('openai');
-const client = new OpenAI();
+require("dotenv").config();
+const { GoogleGenAI } = require("@google/genai");
 
-const openai = new OpenAI({
-    apiKey: process.env.OPEN_API_KEY
-});
+// Initialize Google AI
+const ai = new GoogleGenAI({ apiKey: process.env.AI_API_KEY });
 
-router.post('/generate-mealplan', async (req, res) => {
-  const { dietaryPreference, calorieGoal } = req.body;
+router.post("/generate-mealplan", async (req, res) => {
+  const {
+    dailyCalories,
+    dietaryRestrictions,
+    proteinGoal,
+    carbGoal,
+    fatGoal,
+    additionalRequirements,
+  } = req.body;
+
+  // Validate required fields
+  if (!dailyCalories || !proteinGoal || !carbGoal || !fatGoal) {
+    return res.status(400).json({
+      message:
+        "Missing required fields: dailyCalories, proteinGoal, carbGoal, and fatGoal are required",
+    });
+  }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a professional dietitian. Only return JSON.'
+    const prompt = `Create a 7-day meal plan with the following requirements:
+      - Dietary Restrictions: ${dietaryRestrictions || "None"}
+      - Daily Calories: ${dailyCalories} kcal
+      - Protein Goal: ${proteinGoal}g
+      - Fat Goal: ${fatGoal}g
+      - Carb Goal: ${carbGoal}g
+      - Additional Requirements: ${additionalRequirements || "None"}
+
+      Please provide a detailed meal plan for each day including breakfast, lunch, snack, and dinner.
+      Format the response as a JSON object with the following structure:
+      {
+        "monday": {
+          "breakfast": { "meal": "meal name", "calories": number, "protein": number, "carbs": number, "fat": number },
+          "lunch": { "meal": "meal name", "calories": number, "protein": number, "carbs": number, "fat": number },
+          "snack": { "meal": "meal name", "calories": number, "protein": number, "carbs": number, "fat": number },
+          "dinner": { "meal": "meal name", "calories": number, "protein": number, "carbs": number, "fat": number }
         },
-        {
-          role: 'user',
-          content: `Create a 7-day ${dietaryPreference} meal plan with ${calorieGoal} kcal per day. Include breakfast, lunch, snack, and dinner. Format the output in JSON grouped by day.`
-        }
-      ]
+        // ... repeat for all days of the week
+      }
+      
+      Ensure that:
+      1. The total daily calories are close to ${dailyCalories}
+      2. The macronutrient distribution matches the goals
+      3. All meals comply with the dietary restrictions
+      4. Include only the JSON in your response, no additional text`;
+
+    // Generate content using the new API pattern
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-001',
+      contents: prompt,
     });
 
-    const aiResponse = completion.choices[0].message.content;
-    const parsed = JSON.parse(aiResponse);
+    try {
+      // Parse the response as JSON
+      // Note: Gemini might include markdown code blocks, so we need to clean the response
+      const cleanJson = response.text.replace(/```json\n?|\n?```/g, "").trim();
+      const mealPlan = JSON.parse(cleanJson);
 
-    res.status(200).json(parsed);
+      res.status(200).json(mealPlan);
+    } catch (parseError) {
+      console.error("JSON parsing error:", parseError);
+      res.status(500).json({
+        message: "Failed to parse AI response",
+        error: parseError.message,
+        rawResponse: response.text,
+      });
+    }
   } catch (error) {
-    console.error('AI generation error:', error);
-    res.status(500).json({ message: 'Failed to generate meal plan.' });
+    console.error("AI generation error:", error);
+    res.status(500).json({
+      message: "Failed to generate meal plan",
+      error: error.message,
+    });
   }
 });
 

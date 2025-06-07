@@ -201,7 +201,7 @@ export default function Main() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-gray-800">Your Meal Plan</h3>
-        <button className="text-sm px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700">
+        <button className="text-sm px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700" onClick={() => navigate("/mealplan")}>
           Regenerate Plan
         </button>
       </div>
@@ -417,7 +417,8 @@ export default function Main() {
                 onClick={() => {
                   if (tab.key === "profile") {
                     navigate("/profile");
-                  } else {
+                  } 
+                  else {
                     setActiveTab(tab.key);
                   }
                 }}
