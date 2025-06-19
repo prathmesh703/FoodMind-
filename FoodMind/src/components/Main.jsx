@@ -6,19 +6,41 @@ import axios from "axios";
 export default function Main() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
-  const [userData, setUserData] = useState({
-    name: "John Doe",
-    dailyCalories: 2100,
-    proteinGoal: 140,
-    carbGoal: 210,
-    fatGoal: 70,
-    waterGoal: 2000,
-    dietRestrictions: ["Gluten-free"],
-    weeklyProgress: [1800, 2050, 1950, 2200, 2100, 1900, 0],
-  });
-
-  // State for fetched meal plan
+  const [userData, setUserData] = useState(null);
   const [mealPlan, setMealPlan] = useState(null);
+  const [selectedDay, setSelectedDay] = useState("monday");
+  const [checkedMeals, setCheckedMeals] = useState({}); 
+  const daysOfWeek = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
+  const mealTimes = ["breakfast", "lunch", "snack", "dinner"];
+
+  // Auth middleware and fetch real user data
+  useEffect(() => {
+    const checkAuthAndFetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+      try {
+        const response = await axios.get("http://localhost:5000/api/user/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUserData(response.data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        navigate("/login");
+      }
+    };
+    checkAuthAndFetchUser();
+  }, [navigate]);
 
   // Fetch meal plan from backend
   const fetchMealPlan = async () => {
@@ -55,22 +77,48 @@ export default function Main() {
 
   // Calculate daily calories
   const calculateDailyCalories = () => {
-    const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const adjustedIndex = today === 0 ? 6 : today - 1; // Convert to 0 = Monday, 6 = Sunday
-    return userData.weeklyProgress[adjustedIndex];
+    
   };
 
-  const [selectedDay, setSelectedDay] = useState("monday");
-  const daysOfWeek = [
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-    "sunday",
-  ];
-  const mealTimes = ["breakfast", "lunch", "snack", "dinner"];
+  // Calculate checked macros for the selected day
+  const checkedMacros = mealPlan && mealPlan[selectedDay]
+    ? Object.entries(mealPlan[selectedDay]).reduce(
+        (acc, [mealTime, meal]) => {
+          if (checkedMeals[selectedDay]?.[mealTime]) {
+            acc.calories += meal.calories || 0;
+            acc.protein += meal.protein || 0;
+            acc.carbs += meal.carbs || 0;
+            acc.fats += meal.fat || 0;
+          }
+          return acc;
+        },
+        { calories: 0, protein: 0, carbs: 0, fats: 0 }
+      )
+    : { calories: 0, protein: 0, carbs: 0, fats: 0 };
+
+  // Handler for checkbox toggle
+  const handleMealCheck = (day, mealTime) => {
+    setCheckedMeals(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [mealTime]: !prev[day]?.[mealTime],
+      },
+    }));
+  };
+
+  // Restore checkedMeals from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("checkedMeals");
+    if (stored) {
+      setCheckedMeals(JSON.parse(stored));
+    }
+  }, []);
+
+  // Save checkedMeals to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("checkedMeals", JSON.stringify(checkedMeals));
+  }, [checkedMeals]);
 
   // Render functions for different tabs
   const renderOverview = () => (
@@ -83,16 +131,13 @@ export default function Main() {
           <div className="bg-green-50 p-4 rounded-lg">
             <p className="text-sm text-gray-500">Calories</p>
             <p className="text-xl font-bold text-gray-800">
-              {calculateDailyCalories()} / {userData.dailyCalories}
+              {checkedMacros.calories} / {userData.dailyCalories}
             </p>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div
                 className="bg-green-500 h-2 rounded-full"
                 style={{
-                  width: `${Math.min(
-                    100,
-                    (calculateDailyCalories() / userData.dailyCalories) * 100
-                  )}%`,
+                  width: `${Math.min(100, (checkedMacros.calories / userData.dailyCalories) * 100)}%`,
                 }}
               ></div>
             </div>
@@ -101,12 +146,12 @@ export default function Main() {
           <div className="bg-blue-50 p-4 rounded-lg">
             <p className="text-sm text-gray-500">Protein</p>
             <p className="text-xl font-bold text-gray-800">
-              110g / {userData.proteinGoal}g
+              {checkedMacros.protein}g / {userData.proteinGoal}g
             </p>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div
                 className="bg-blue-500 h-2 rounded-full"
-                style={{ width: `${(110 / userData.proteinGoal) * 100}%` }}
+                style={{ width: `${Math.min(100, (checkedMacros.protein / userData.proteinGoal) * 100)}%` }}
               ></div>
             </div>
           </div>
@@ -114,12 +159,12 @@ export default function Main() {
           <div className="bg-yellow-50 p-4 rounded-lg">
             <p className="text-sm text-gray-500">Carbs</p>
             <p className="text-xl font-bold text-gray-800">
-              180g / {userData.carbGoal}g
+              {checkedMacros.carbs}g / {userData.carbGoal}g
             </p>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div
                 className="bg-yellow-500 h-2 rounded-full"
-                style={{ width: `${(180 / userData.carbGoal) * 100}%` }}
+                style={{ width: `${Math.min(100, (checkedMacros.carbs / userData.carbGoal) * 100)}%` }}
               ></div>
             </div>
           </div>
@@ -127,46 +172,18 @@ export default function Main() {
           <div className="bg-purple-50 p-4 rounded-lg">
             <p className="text-sm text-gray-500">Fats</p>
             <p className="text-xl font-bold text-gray-800">
-              55g / {userData.fatGoal}g
+              {checkedMacros.fats}g / {userData.fatGoal}g
             </p>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div
                 className="bg-purple-500 h-2 rounded-full"
-                style={{ width: `${(55 / userData.fatGoal) * 100}%` }}
+                style={{ width: `${Math.min(100, (checkedMacros.fats / userData.fatGoal) * 100)}%` }}
               ></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-md">
-        <h3 className="text-lg font-medium text-gray-800 mb-4">
-          Weekly Progress
-        </h3>
-        <div className="h-48 flex items-end space-x-2">
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-            (day, index) => (
-              <div key={day} className="flex flex-col items-center flex-1">
-                <div
-                  className={`w-full ${
-                    userData.weeklyProgress[index] > 0
-                      ? "bg-teal-500"
-                      : "bg-gray-200"
-                  } rounded-t-md`}
-                  style={{
-                    height: `${
-                      userData.weeklyProgress[index] > 0
-                        ? (userData.weeklyProgress[index] / 2500) * 100
-                        : 5
-                    }%`,
-                  }}
-                ></div>
-                <p className="mt-2 text-xs text-gray-500">{day}</p>
-              </div>
-            )
-          )}
-        </div>
-      </div>
 
       <div className="bg-white p-6 rounded-xl shadow-md">
         <h3 className="text-lg font-medium text-gray-800 mb-2">
@@ -174,14 +191,22 @@ export default function Main() {
         </h3>
         <div className="space-y-3">
           {mealPlan && mealPlan[selectedDay]
-            ? Object.values(mealPlan[selectedDay]).map((meal, index) => (
+            ? Object.entries(mealPlan[selectedDay]).map(([mealTime, meal], index) => (
               <div
                 key={index}
                 className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50"
               >
-                <div>
-                  <p className="text-sm text-gray-500">{meal.time}</p>
-                  <p className="font-medium">{meal.meal}</p>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 text-green-600 rounded focus:ring-green-500 mr-3"
+                    checked={!!checkedMeals[selectedDay]?.[mealTime]}
+                    onChange={() => handleMealCheck(selectedDay, mealTime)}
+                  />
+                  <div>
+                    <p className="text-sm text-gray-500 text-left">{meal.time}</p>
+                    <p className="font-medium">{meal.meal}</p>
+                  </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-500">{meal.calories} cal</p>
@@ -191,9 +216,6 @@ export default function Main() {
             : <div className="text-gray-500">No meal plan available. Generate one to get started!</div>
           }
         </div>
-        <button className="mt-4 text-green-600 text-sm font-medium hover:text-green-800">
-          Add a meal +
-        </button>
       </div>
     </div>
   );
@@ -336,6 +358,15 @@ export default function Main() {
 
   // Profile render
   const renderProfile = () => <Profile userData={userData} />;
+
+  // Add a loading state while fetching user data
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

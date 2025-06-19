@@ -19,6 +19,7 @@ router.get("/profile", verifyToken, async (req, res) => {
       fatGoal: user.fatGoal,
       waterGoal: user.waterGoal,
       dietRestrictions: user.dietRestrictions,
+      weeklyProgress: user.weeklyProgress,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

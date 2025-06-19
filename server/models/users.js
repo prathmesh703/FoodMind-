@@ -17,27 +17,31 @@ const userSchema = new mongoose.Schema(
     },
     dailyCalories: {
       type: Number,
-      default: 2000,
+      default: 0,
     },
     proteinGoal: {
       type: Number,
-      default: 150,
+      default: 0,
     },
     carbGoal: {
       type: Number,
-      default: 200,
+      default: 0,
     },
     fatGoal: {
       type: Number,
-      default: 65,
+      default: 0,
     },
     waterGoal: {
       type: Number,
-      default: 2000,
+      default: 0,
     },
     dietRestrictions: {
       type: [String],
       default: [],
+    },
+    weeklyProgress: {
+      type: [Number],
+      default: [0, 0, 0, 0, 0, 0, 0],
     },
   },
   {
