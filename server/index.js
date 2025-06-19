@@ -5,6 +5,7 @@ require("dotenv").config();
 const { router: authRouter } = require("./routes/auth");
 const aiRoute = require("./routes/aiRoutes");
 const profileRouter = require("./routes/profile");
+const mealPlanRouter = require("./routes/mealPlan");
 
 const app = express();
 app.use(cors());
@@ -18,5 +19,6 @@ mongoose
 app.use("/api/auth", authRouter);
 app.use("/api/mealplan", aiRoute);
 app.use("/api/user", profileRouter);
+app.use("/api/savedmealplan", mealPlanRouter);
 
 app.listen(5000, () => console.log("server runnig on port 5000"));

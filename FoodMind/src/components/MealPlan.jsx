@@ -45,9 +45,9 @@ export default function MealPlan() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5000/api/ai/generate-meal-plan",
+        " http://localhost:5000/api/mealplan/generate-mealplan",
         {
-          ...preferences,
+          
           dailyCalories: userData.dailyCalories,
           dietaryRestrictions: userData.dietRestrictions,
           proteinGoal: userData.proteinGoal,
@@ -62,6 +62,9 @@ export default function MealPlan() {
         }
       );
       setMealPlan(response.data);
+      console.log(response.data);
+      navigate("/");
+
     } catch (error) {
       console.error("Error generating meal plan:", error);
       if (error.response?.status === 401) {

@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 require("dotenv").config();
 const { GoogleGenAI } = require("@google/genai");
+const mongoose = require("mongoose");
+const MealPlan = require("../models/mealPlan.js").default || require("../models/mealPlan.js");
 
 // Initialize Google AI
 const ai = new GoogleGenAI({ apiKey: process.env.AI_API_KEY });
@@ -63,7 +65,30 @@ router.post("/generate-mealplan", async (req, res) => {
       const cleanJson = response.text.replace(/```json\n?|\n?```/g, "").trim();
       const mealPlan = JSON.parse(cleanJson);
 
-      res.status(200).json(mealPlan);
+      // Save each day's meal plan to MongoDB
+      const days = Object.keys(mealPlan);
+      const savedPlans = [];
+      for (const day of days) {
+        const meals = mealPlan[day];
+        // Convert to array of meals for the schema
+        const mealsArray = Object.entries(meals).map(([time, meal]) => ({
+          time: time.charAt(0).toUpperCase() + time.slice(1),
+          meal: meal.meal,
+          calories: meal.calories,
+          protein: meal.protein,
+          carbs: meal.carbs,
+          fat: meal.fat,
+        }));
+        // Upsert (update if exists, otherwise insert)
+        const saved = await MealPlan.findOneAndUpdate(
+          { day: day.charAt(0).toUpperCase() + day.slice(1) },
+          { day: day.charAt(0).toUpperCase() + day.slice(1), meals: mealsArray },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        savedPlans.push(saved);
+      }
+
+      res.status(200).json({ mealPlan, savedPlans });
     } catch (parseError) {
       console.error("JSON parsing error:", parseError);
       res.status(500).json({

@@ -1,9 +1,12 @@
 import mongoose from "mongoose";
 
 const mealSchema = new mongoose.Schema({
-    name: {type: String, required: true},
+    time:{ type:String, enum: ['Breakfast', 'Lunch', 'Snack', 'Dinner'] , required:true},
+    meal: {type: String, required: true},
     calories: { type:Number, required:true},
-    time:{ type:String, enum: [] , required:true}
+    protein: {type: Number, required: true},
+    carbs: {type: Number, required: true},
+    fat: {type: Number, required: true}
 });
 
 const mealPlanSchema = new mongoose.Schema({

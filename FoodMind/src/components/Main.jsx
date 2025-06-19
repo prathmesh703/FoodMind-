@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Profile from "./Profile";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
 export default function Main() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
@@ -15,45 +17,29 @@ export default function Main() {
     weeklyProgress: [1800, 2050, 1950, 2200, 2100, 1900, 0],
   });
 
-  // Mock meal plans data
-  const mealPlans = [
-    {
-      id: 1,
-      day: "Monday",
-      meals: [
-        { name: "Avocado Toast with Eggs", calories: 420, time: "Breakfast" },
-        {
-          name: "Greek Salad with Grilled Chicken",
-          calories: 550,
-          time: "Lunch",
-        },
-        { name: "Protein Smoothie", calories: 320, time: "Snack" },
-        {
-          name: "Baked Salmon with Roasted Vegetables",
-          calories: 610,
-          time: "Dinner",
-        },
-      ],
-    },
-    {
-      id: 2,
-      day: "Tuesday",
-      meals: [
-        {
-          name: "Overnight Oats with Berries",
-          calories: 380,
-          time: "Breakfast",
-        },
-        { name: "Quinoa Bowl with Vegetables", calories: 520, time: "Lunch" },
-        { name: "Apple with Almond Butter", calories: 200, time: "Snack" },
-        {
-          name: "Turkey Meatballs with Zucchini Noodles",
-          calories: 580,
-          time: "Dinner",
-        },
-      ],
-    },
-  ];
+  // State for fetched meal plan
+  const [mealPlan, setMealPlan] = useState(null);
+
+  // Fetch meal plan from backend
+  const fetchMealPlan = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/savedmealplan");
+      const planObj = {};
+      response.data.forEach(dayPlan => {
+        planObj[dayPlan.day.toLowerCase()] = {};
+        dayPlan.meals.forEach(meal => {
+          planObj[dayPlan.day.toLowerCase()][meal.time.toLowerCase()] = meal;
+        });
+      });
+      setMealPlan(planObj);
+    } catch (error) {
+      console.error("Error fetching meal plan:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMealPlan();
+  }, []);
 
   // Mock shopping list data
   const shoppingList = [
@@ -73,6 +59,18 @@ export default function Main() {
     const adjustedIndex = today === 0 ? 6 : today - 1; // Convert to 0 = Monday, 6 = Sunday
     return userData.weeklyProgress[adjustedIndex];
   };
+
+  const [selectedDay, setSelectedDay] = useState("monday");
+  const daysOfWeek = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
+  const mealTimes = ["breakfast", "lunch", "snack", "dinner"];
 
   // Render functions for different tabs
   const renderOverview = () => (
@@ -175,20 +173,23 @@ export default function Main() {
           Today's Meals
         </h3>
         <div className="space-y-3">
-          {mealPlans[0].meals.map((meal, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50"
-            >
-              <div>
-                <p className="text-sm text-gray-500">{meal.time}</p>
-                <p className="font-medium">{meal.name}</p>
+          {mealPlan && mealPlan[selectedDay]
+            ? Object.values(mealPlan[selectedDay]).map((meal, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50"
+              >
+                <div>
+                  <p className="text-sm text-gray-500">{meal.time}</p>
+                  <p className="font-medium">{meal.meal}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">{meal.calories} cal</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-500">{meal.calories} cal</p>
-              </div>
-            </div>
-          ))}
+            ))
+            : <div className="text-gray-500">No meal plan available. Generate one to get started!</div>
+          }
         </div>
         <button className="mt-4 text-green-600 text-sm font-medium hover:text-green-800">
           Add a meal +
@@ -201,73 +202,70 @@ export default function Main() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-gray-800">Your Meal Plan</h3>
-        <button className="text-sm px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700" onClick={() => navigate("/mealplan")}>
-          Regenerate Plan
-        </button>
+        <button className="text-sm px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700" onClick={() => navigate("/mealplan")}>Regenerate Plan</button>
       </div>
 
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="flex border-b overflow-x-auto">
-          {[
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-          ].map((day, index) => (
+          {daysOfWeek.map((day, index) => (
             <button
               key={day}
               className={`px-4 py-3 text-sm font-medium whitespace-nowrap ${
-                index === 0
+                selectedDay === day
                   ? "text-green-600 border-b-2 border-green-500"
                   : "text-gray-500 hover:text-green-600"
               }`}
+              onClick={() => setSelectedDay(day)}
             >
-              {day}
+              {day.charAt(0).toUpperCase() + day.slice(1)}
             </button>
           ))}
         </div>
 
         <div className="p-6 space-y-6">
-          {["Breakfast", "Lunch", "Snack", "Dinner"].map((mealTime, index) => {
-            const meal = mealPlans[0].meals.find((m) => m.time === mealTime);
-            return (
-              <div
-                key={mealTime}
-                className="border-b pb-4 last:border-0 last:pb-0"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-gray-800">{mealTime}</h4>
-                  <span className="text-sm text-gray-500">
-                    {meal ? `${meal.calories} cal` : "0 cal"}
-                  </span>
-                </div>
-                {meal ? (
-                  <div className="flex items-center">
-                    <div className="bg-gray-100 h-16 w-16 rounded-md flex-shrink-0"></div>
-                    <div className="ml-4">
-                      <p className="font-medium">{meal.name}</p>
-                      <div className="flex mt-1">
-                        <button className="text-xs text-green-600 hover:text-green-800">
-                          View Recipe
-                        </button>
-                        <span className="mx-2 text-gray-300">|</span>
-                        <button className="text-xs text-gray-500 hover:text-gray-700">
-                          Replace
-                        </button>
-                      </div>
+          {mealPlan && mealPlan[selectedDay]
+            ? mealTimes.map((mealTime) => {
+                const meal = mealPlan[selectedDay][mealTime];
+                return (
+                  <div
+                    key={mealTime}
+                    className="border-b pb-4 last:border-0 last:pb-0"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium text-gray-800">{mealTime.charAt(0).toUpperCase() + mealTime.slice(1)}</h4>
+                      <span className="text-sm text-gray-500">
+                        {meal ? `${meal.calories} cal` : "0 cal"}
+                      </span>
                     </div>
+                    {meal ? (
+                      <div className="flex items-center">
+                        <div className="bg-gray-100 h-16 w-16 rounded-md flex-shrink-0"></div>
+                        <div className="ml-4">
+                          <p className="font-medium">{meal.meal}</p>
+                          <div className="text-xs text-gray-500 mt-1 text-left">
+                            Protein: {meal.protein}g | Carbs: {meal.carbs}g | Fat: {meal.fat}g
+                          </div>
+                          <div className="flex mt-1">
+                            <button className="text-xs text-green-600 hover:text-green-800">
+                              View Recipe
+                            </button>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <button className="text-xs text-gray-500 hover:text-gray-700">
+                              Replace
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button className="text-sm text-green-600 hover:text-green-800">
+                        + Add a meal
+                      </button>
+                    )}
                   </div>
-                ) : (
-                  <button className="text-sm text-green-600 hover:text-green-800">
-                    + Add a meal
-                  </button>
-                )}
-              </div>
-            );
-          })}
+                );
+              })
+            : <div className="text-gray-500">No meal plan available. Generate one to get started!</div>
+          }
         </div>
       </div>
     </div>
