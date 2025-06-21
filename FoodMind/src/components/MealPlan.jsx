@@ -21,7 +21,7 @@ export default function MealPlan() {
         }
 
         const response = await axios.get(
-          "http://localhost:5000/api/user/profile",
+          "${import.meta.env.VITE_API_URL}/api/user/profile",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -45,7 +45,7 @@ export default function MealPlan() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        " http://localhost:5000/api/mealplan/generate-mealplan",
+        "${import.meta.env.VITE_API_URL}/api/mealplan/generate-mealplan",
         {
           
           dailyCalories: userData.dailyCalories,

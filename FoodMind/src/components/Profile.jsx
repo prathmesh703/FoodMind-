@@ -31,7 +31,7 @@ export default function Profile({ userData: propUserData }) {
         }
 
         const response = await axios.get(
-          "http://localhost:5000/api/user/profile",
+          `${import.meta.env.VITE_API_URL}/api/user/profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -70,7 +70,7 @@ export default function Profile({ userData: propUserData }) {
         return;
       }
 
-      await axios.put("http://localhost:5000/api/user/goals", editedGoals, {
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/user/goals`, editedGoals, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -120,7 +120,7 @@ export default function Profile({ userData: propUserData }) {
         ];
 
         await axios.put(
-          "http://localhost:5000/api/user/diet-restrictions",
+          `${import.meta.env.VITE_API_URL}/api/user/diet-restrictions`,
           { dietRestrictions: updatedRestrictions },
           {
             headers: {
@@ -157,7 +157,7 @@ export default function Profile({ userData: propUserData }) {
       );
 
       await axios.put(
-        "http://localhost:5000/api/user/diet-restrictions",
+        `${import.meta.env.VITE_API_URL}/api/user/diet-restrictions`,
         { dietRestrictions: updatedRestrictions },
         {
           headers: {

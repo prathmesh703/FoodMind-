@@ -30,7 +30,7 @@ export default function Main() {
         return;
       }
       try {
-        const response = await axios.get("http://localhost:5000/api/user/profile", {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUserData(response.data);
@@ -45,7 +45,7 @@ export default function Main() {
   // Fetch meal plan from backend
   const fetchMealPlan = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/savedmealplan");
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/savedmealplan`);
       const planObj = {};
       response.data.forEach(dayPlan => {
         planObj[dayPlan.day.toLowerCase()] = {};
