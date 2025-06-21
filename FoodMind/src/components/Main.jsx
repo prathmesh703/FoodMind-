@@ -62,24 +62,7 @@ export default function Main() {
   useEffect(() => {
     fetchMealPlan();
   }, []);
-
-  // Mock shopping list data
-  const shoppingList = [
-    { id: 1, name: "Avocados", quantity: 3, category: "Produce" },
-    { id: 2, name: "Eggs", quantity: 12, category: "Dairy" },
-    { id: 3, name: "Chicken Breast", quantity: 1, category: "Meat" },
-    { id: 4, name: "Quinoa", quantity: 1, category: "Grains" },
-    { id: 5, name: "Greek Yogurt", quantity: 2, category: "Dairy" },
-    { id: 6, name: "Spinach", quantity: 1, category: "Produce" },
-    { id: 7, name: "Salmon Fillets", quantity: 2, category: "Seafood" },
-    { id: 8, name: "Almonds", quantity: 1, category: "Nuts" },
-  ];
-
-  // Calculate daily calories
-  const calculateDailyCalories = () => {
-    
-  };
-
+  
   // Calculate checked macros for the selected day
   const checkedMacros = mealPlan && mealPlan[selectedDay]
     ? Object.entries(mealPlan[selectedDay]).reduce(
@@ -293,69 +276,6 @@ export default function Main() {
     </div>
   );
 
-  const renderShoppingList = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-800">Shopping List</h3>
-        <div className="flex space-x-2">
-          <button className="text-sm px-3 py-1 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200">
-            Sort
-          </button>
-          <button className="text-sm px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700">
-            Print List
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-6 space-y-4">
-          {["Produce", "Dairy", "Meat", "Seafood", "Grains", "Nuts"].map(
-            (category) => {
-              const items = shoppingList.filter(
-                (item) => item.category === category
-              );
-              if (items.length === 0) return null;
-
-              return (
-                <div key={category}>
-                  <h4 className="font-medium text-gray-800 mb-2">{category}</h4>
-                  <div className="space-y-2">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center p-2 border rounded-lg hover:bg-gray-50"
-                      >
-                        <input
-                          type="checkbox"
-                          className="h-5 w-5 text-green-600 rounded focus:ring-green-500"
-                        />
-                        <span className="ml-3 flex-grow">{item.name}</span>
-                        <span className="text-gray-500">x{item.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            }
-          )}
-        </div>
-
-        <div className="px-6 py-4 bg-gray-50 border-t">
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add an item"
-              className="flex-grow px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            />
-            <button className="px-4 py-2 bg-green-600 text-white rounded-r-md hover:bg-green-700">
-              Add
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   // Profile render
   const renderProfile = () => <Profile userData={userData} />;
 
@@ -438,7 +358,6 @@ export default function Main() {
             {[
               { key: "overview", label: "Overview" },
               { key: "meal-plan", label: "Meal Plan" },
-              { key: "shopping-list", label: "Shopping List" },
               { key: "profile", label: "Profile" },
             ].map((tab) => (
               <button
@@ -466,7 +385,6 @@ export default function Main() {
         {/* Tab Content */}
         {activeTab === "overview" && renderOverview()}
         {activeTab === "meal-plan" && renderMealPlan()}
-        {activeTab === "shopping-list" && renderShoppingList()}
         {activeTab === "profile" && renderProfile()}
       </main>
     </div>

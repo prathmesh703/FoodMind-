@@ -408,7 +408,6 @@ export default function Profile({ userData: propUserData }) {
             {[
               { key: "overview", label: "Overview" },
               { key: "meal-plan", label: "Meal Plan" },
-              { key: "shopping-list", label: "Shopping List" },
               { key: "profile", label: "Profile" },
             ].map((tab) => (
               <button

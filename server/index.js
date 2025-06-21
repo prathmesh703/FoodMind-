@@ -10,7 +10,7 @@ const mealPlanRouter = require("./routes/mealPlan");
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+const port = process.env.PORT || 5000;
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("mongo db connected"))
@@ -21,4 +21,4 @@ app.use("/api/mealplan", aiRoute);
 app.use("/api/user", profileRouter);
 app.use("/api/savedmealplan", mealPlanRouter);
 
-app.listen(5000, () => console.log("server runnig on port 5000"));
+app.listen(port, () => console.log("server runnig on port 5000"));
